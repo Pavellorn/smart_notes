@@ -5,7 +5,7 @@ from datetime import datetime
 
 
 class NotesManager():
-    def __init__(self, filename="data.json"):
+    def __init__(self, filename="notes.json"):
         self.filename = filename
         self.notes = self.load_notes()
 
@@ -98,15 +98,9 @@ class NotesManager():
         return responce
 
     def generate_id(self):
-        all_id = []
-        for note in self.notes:
-            note_id = note['id']
-            all_id.append(note_id)
-        
-        for i in range(len(all_id) + 1):
-            if i not in all_id:
-                return i
-        return len(all_id)
+            if not self.notes:
+                return 1
+            return max(note["id"] for note in self.notes) + 1
 
     def get_note_by_id(self, note_id):
         for note in self.notes:
