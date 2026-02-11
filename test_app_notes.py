@@ -6,6 +6,10 @@ BASE_DIR = Path(__file__).parent
 file_path = BASE_DIR / "data.json"
 
 
+
+
+
+
 def test_reading_real_file():
     """
     Здесь проверяю основной функционал класса NotesManager:
@@ -40,4 +44,28 @@ def test_reading_real_file():
         note_1.notes[2]["id"] != 4
     )  # здесь я проверяю, что третья записать осталась, а 4 удалилась, и id = 4 нет
 
-test_reading_real_file()
+
+
+# тест с временным файлом
+def test_reading_tmp_json(tmp_path):
+    test_file = tmp_path / "notes.json"
+    test_file.write_text("[]", encoding="utf-8")
+    
+    # Создаю экземпляр класса
+    note = NotesManager()
+    note.filename = test_file
+    note.notes = note.load_notes()
+    
+    assert len(note.notes) == 0
+    
+    note.add_note("Тестовая заметка №1", ["yep", "da"])
+    assert len(note.notes) == 1
+    
+    note.add_note("Тестовая заметка №2", ["yes", "no"])
+    
+    result = note.search_notes("yep")
+    assert len(result) == 1
+    assert "yep" in result[0]["tags"]
+    
+    note.delete_note(2)
+    assert len(note.notes) == 1
