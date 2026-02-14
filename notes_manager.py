@@ -12,12 +12,12 @@ class NotesManager():
     def load_notes(self):
         # Проверяем на наличие файла, если его нет, то создаём
         if not os.path.exists(self.filename):
-            with open(self.filename, 'w', encoding='utf8') as f:
-                json.dump([], f)
+            with open(self.filename, 'w', encoding='utf-8') as f:
+                json.dump([], f, ensure_ascii=False, indent=2)
             return []
 
         try:
-            with open(self.filename, 'r', encoding='utf8') as f:
+            with open(self.filename, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except json.JSONDecodeError:
             raise ValueError(f'Что-то не так с файлом {self.filename}')
@@ -25,8 +25,8 @@ class NotesManager():
     def save_notes(self, notes):
         # Полная перезапись файла
         if notes:
-            with open(self.filename, 'w', encoding='utf8') as f:
-                json.dump(notes, f)
+            with open(self.filename, 'w', encoding='utf-8') as f:
+                json.dump(notes, f, ensure_ascii=False, indent=2)
             return f'Данные записаны в {self.filename}'
         else:
             return 'Добавьте данные чтобы сохранить'
@@ -72,35 +72,34 @@ class NotesManager():
         return 'Заметка не найдена'
 
     def search_notes(self, query: str) -> list[dict]:
-        responce = []
-        query_lw = query.lower()
-        lst_query = query_lw.split(' ')
-        
+        if not query.strip():
+            return self.notes
+
+        result = []
+        words = [w.lower() for w in query.split() if w.strip()]
+
         for note in self.notes:
-            note_added = False
-            for one_query in lst_query:
-                if not one_query.strip():
-                    continue
-                    
-                # Поиск в тексте
-                if one_query in note['text'].lower() and not note_added:
-                    responce.append(note)
-                    note_added = True
-                    continue
-                
-                # Поиск в тегах
-                for tag in note['tags']:
-                    if one_query == tag.lower().strip() and not note_added:
-                        responce.append(note)
-                        note_added = True
-                        break
-                        
-        return responce
+            text = note["text"].lower()
+
+            # Приводим теги к единой строке
+            tags = note["tags"]
+            if isinstance(tags, list):
+                tags_text = " ".join(tags).lower()
+            else:
+                tags_text = str(tags).lower()
+
+            for word in words:
+                if word in text or word in tags_text:
+                    result.append(note)
+                    break
+
+        return result
+
 
     def generate_id(self):
-            if not self.notes:
-                return 1
-            return max(note["id"] for note in self.notes) + 1
+        ids = [note.get("id", 0) for note in self.notes if isinstance(note, dict)]
+        return max(ids, default=0) + 1
+    
 
     def get_note_by_id(self, note_id):
         for note in self.notes:
